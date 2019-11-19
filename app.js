@@ -1,20 +1,46 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express = require('express')
+const path = require('path')
+const cookieParser = require('cookie-parser')
+const logger = require('morgan')
+const mongoose = require("mongoose")
+const createError = require("http-errors")
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const config = require("./config")
 
-var app = express();
+const app = express()
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(logger('dev'))
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 
-module.exports = app;
+
+mongoose
+    .connect(config.db, {
+        useNewUrlParser: true,
+        useCreateIndex: true,
+        useUnifiedTopology: true
+    })
+    .then(() => 
+        console.log(`Connected to MongoDB at ${ config.db }...`)
+    )
+    .catch(err => {
+        console.log("Failed to connect to Mongodb...", err)
+        process.exit()        
+    })
+
+
+const usersRouter = require("./routes/users")
+
+app.use('/users', usersRouter)
+app.use((req,res, next) => {
+    next(createError(404))
+})
+
+app.use(function(err, req, res, next){
+    res.locals.message = err.message
+    res.status(err.status || 500)
+    res.send(err)
+})
+
+module.exports = app
