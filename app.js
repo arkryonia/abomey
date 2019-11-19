@@ -32,7 +32,8 @@ mongoose
 
 const usersRouter = require("./routes/users")
 
-app.use('/users', usersRouter)
+app.use('/api/users', usersRouter)
+
 app.use((req,res, next) => {
     next(createError(404))
 })
